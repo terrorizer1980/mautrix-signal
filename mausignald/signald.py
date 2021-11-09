@@ -18,8 +18,6 @@ from .types import (Address, Quote, Attachment, Reaction, Account, Message, Devi
 T = TypeVar('T')
 EventHandler = Callable[[T], Awaitable[None]]
 
-CONNECTED_GAUGE = Gauge("bridge_signal_connected", "Is the bridge connected to signald")
-RECONNECTIONS_COUNTER = Counter("bridge_signal_reconnections", "The number of reconnections made to signald")
 PROFILE_RESULT_COUNTER = Counter("bridge_signal_profile_result", "The result of profile requests made to signald", ["result"])
 
 class SignaldClient(SignaldRPCClient):
@@ -103,14 +101,12 @@ class SignaldClient(SignaldRPCClient):
             return False
 
     async def _resubscribe(self, unused_data: Dict[str, Any]) -> None:
-        CONNECTED_GAUGE.set(1)
         if self._subscriptions:
             self.log.debug("Resubscribing to users")
             for username in list(self._subscriptions):
                 await self.subscribe(username)
 
     async def _on_disconnect(self, *_) -> None:
-        CONNECTED_GAUGE.set(0)
         self.log.error("signald socket disconnected")
         if self._subscriptions:
             self.log.debug("Notifying of disconnection from users")
@@ -121,8 +117,6 @@ class SignaldClient(SignaldRPCClient):
                     exception="Disconnected from signald"
                 )
                 await self._run_event_handler(evt)
-        RECONNECTIONS_COUNTER.inc(1)
-        await self.connect()
 
     async def register(self, phone: str, voice: bool = False, captcha: Optional[str] = None
                        ) -> str:
