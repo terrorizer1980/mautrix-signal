@@ -174,7 +174,7 @@ class SignalBridge(Bridge):
                 await asyncio.sleep(ACTIVE_USER_METRICS_INTERVAL_S)
             except asyncio.CancelledError:
                 return
-            log.info("Executing periodic active puppet metric check")
+            log.debug("Executing periodic active puppet metric check")
             try:
                 await self._update_active_puppet_metric(log)
             except asyncio.CancelledError:
